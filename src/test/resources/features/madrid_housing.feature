@@ -1,16 +1,18 @@
 Feature: Testing CraigList's Madrid Housing page
 
-  Scenario: Show Madrid housing page
+  Scenario Outline: Show Madrid housing page
     Given I open Madrid CraigList
     When On homepage click on housing
     Then Validate that Madrid Housing page has been loaded
+    When Sort by '<sort-by-first>'
+    Then Validate that listings are sorted by '<sort-by-first>'
+    When Sort by '<sort-by-after>'
+    Then Validate that listings are sorted by '<sort-by-after>'
 
-#  Scenario: Main heading is visible
-#    Given I am on the example home page
-#    Then the main heading should be "Example Domain"
-#
-#  @wip
-#  Scenario: More information link navigates away
-#    Given I am on the example home page
-#    When I click the more information link
-#    Then the page title should contain "IANA"
+
+    Examples:
+      | sort-by-first | sort-by-after |
+      | PrIcE_ASC     | NEWEST     |
+      | oldest        | price_desc    |
+      | price_desc    | price_asc     |
+
