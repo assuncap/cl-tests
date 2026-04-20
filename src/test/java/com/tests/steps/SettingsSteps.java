@@ -6,6 +6,9 @@ import io.cucumber.java.en.Given;
 
 import java.util.Map;
 
+/**
+ *  Added this class as an example of what I usually include in my frameworks. In this case the ability to override config from the feature file. Can be very useful when particular setup is needed
+ */
 public class SettingsSteps {
 
     private final TestContext ctx;
