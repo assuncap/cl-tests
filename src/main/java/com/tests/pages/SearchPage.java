@@ -9,8 +9,7 @@ import java.time.Year;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,20 +34,24 @@ public class SearchPage extends BasePage {
 
     public enum SortModeSelector {
 
-        NEWEST     ("//button[contains(@class,'cl-search-sort-mode-newest')]"),
-        OLDEST     ("//button[contains(@class,'cl-search-sort-mode-oldest')]"),
-        PRICE_ASC  ("//button[contains(@class,'cl-search-sort-mode-price-asc')]"),
-        PRICE_DESC ("//button[contains(@class,'cl-search-sort-mode-price-desc')]"),
-        UPCOMING   ("//button[contains(@class,'cl-search-sort-mode-upcoming')]"),
-        CONTAINER  ("//div[contains(@class,'bd-for-bd-combo-box') and contains(@class,'bd-list-box')]");
+        NEWEST     ("//button[contains(@class,'cl-search-sort-mode-newest')]","cl-search-sort-mode-newest"),
+        OLDEST     ("//button[contains(@class,'cl-search-sort-mode-oldest')]","cl-search-sort-mode-oldest"),
+        PRICE_ASC  ("//button[contains(@class,'cl-search-sort-mode-price-asc')]","cl-search-sort-mode-price-asc"),
+        PRICE_DESC ("//button[contains(@class,'cl-search-sort-mode-price-desc')]","cl-search-sort-mode-price-desc"),
+        UPCOMING   ("//button[contains(@class,'cl-search-sort-mode-upcoming')]","cl-search-sort-mode-upcoming"),
+        RELEVANT  ("//button[contains(@class,'cl-search-sort-mode-relevant')]","cl-search-sort-mode-relevant");
+
 
         private final String xpath;
+        private final String id;
 
-        SortModeSelector(String xpath) {
+        SortModeSelector(String xpath, String id) {
             this.xpath = xpath;
+            this.id = id;
         }
 
         public String xpath() { return xpath; }
+        public String id() { return id; }
     }
 
 
@@ -64,16 +67,50 @@ public class SearchPage extends BasePage {
 
     public void SortBy(SortModeSelector sortOption)
     {
-        var sorLocator = page.locator(XPATH_SORT_SELECTOR);
-        sorLocator.click();
+        var sortLocator = page.locator(XPATH_SORT_SELECTOR);
+        sortLocator.click();
         var optionLocator = page.locator(sortOption.xpath());
         optionLocator.click();
 
     }
 
     /**
+     *  Gets the list of sort options currently listed on the UI
+     * @return list of all SortModeSelector enums available in the UI
+     */
+    public List<SortModeSelector> getAvailableSortOptions(){
+//        display sorting options list
+        var sortLocator = page.locator(XPATH_SORT_SELECTOR);
+        sortLocator.click();
+        var optionsLocator = page.locator("//div[contains(@class,'bd-for-bd-combo-box')]//button");
+
+        // creat map with css class that identifies the sort option
+        Map<String, SortModeSelector> sortModeMap = new HashMap<>();
+        Arrays.stream(SortModeSelector.values()).forEach(mode ->
+                sortModeMap.put(mode.id(), mode)
+        );
+
+        List<SortModeSelector> list = new ArrayList<>();
+        optionsLocator.all().forEach(option ->{
+
+            String att = option.getAttribute("class");
+            for (var entry : sortModeMap.entrySet()){
+                if(att.contains(entry.getKey()))
+                {
+                    //option has been matched
+                    list.add(entry.getValue());
+                    //removes this option from the list cus it has been matched
+                    sortModeMap.remove(entry.getKey());
+                    break;
+                }
+            }
+        });
+        return list;
+    }
+
+    /**
      * Parses the listed
-     * @return
+     * @return List of listings displayed in the UI
      */
     public List<Listing> parseListings() {
         List<Listing> listings = new ArrayList<>();
@@ -93,6 +130,7 @@ public class SearchPage extends BasePage {
 
             Listing listing = new Listing();
 
+            // Parsing Listing html and CSS into Listing class
             Pattern pricepattern = Pattern.compile("[\\d.]+");
             Matcher pricematcher = pricepattern.matcher(getTextOrEmpty(item, ".priceinfo"));
             if (pricematcher.find()) {

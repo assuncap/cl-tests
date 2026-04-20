@@ -3,9 +3,15 @@ package com.tests.steps;
 import com.tests.context.TestContext;
 import com.tests.pages.CityHomePage;
 import com.tests.pages.SearchPage;
+import io.cucumber.datatable.DataTable;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+
+import java.util.List;
 
 
 
@@ -83,5 +89,25 @@ public class CraigslistSteps {
     }
 
 
+    @Then("Validate displayed sort options:")
+    public void validateDisplayedSortOptions(DataTable table) {
+        Map<String, SearchPage.SortModeSelector> expectedOptions = new LinkedHashMap<>();
+        table.asList().forEach(value -> {
+            SearchPage.SortModeSelector sortMode = SearchPage.SortModeSelector.valueOf(value.toUpperCase());
+            expectedOptions.put(value, sortMode);
+        });
 
+        SearchPage searchPage = ctx.getCurrentPage();
+        var options = searchPage.getAvailableSortOptions();
+
+        assertThat(options)
+                .as("Displayed sort options do not match expected")
+                .containsExactlyInAnyOrderElementsOf(expectedOptions.values());
+
+        
+
+
+
+
+    }
 }
